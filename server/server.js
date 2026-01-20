@@ -11,10 +11,13 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://helifebrics.netlify.app/'  // Add your Netlify URL here
-  ],
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow all origins for now (you can restrict this later)
+    return callback(null, true);
+  },
   credentials: true
 }));
 app.use(bodyParser.json({ limit: '50mb' }));
@@ -22,9 +25,12 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, 'uploads');
+const uploadsDir = process.env.NODE_ENV === 'production' 
+    ? path.join('/tmp', 'uploads')  // Use /tmp on Render
+    : path.join(__dirname, 'uploads');
+    
 if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir);
+    fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
 // Configure multer for file uploads
@@ -40,14 +46,18 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Database setup
-const db = new sqlite3.Database('./workers.db', (err) => {
+const dbPath = process.env.NODE_ENV === 'production'
+    ? '/tmp/workers.db'  // Use /tmp on Render (free tier)
+    : './workers.db';
+
+const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('Error opening database:', err);
         console.error('Failed to initialize database. Please check file permissions.');
         process.exit(1);
     } else {
         console.log('✅ Connected to SQLite database');
-        console.log('Database file: ./workers.db');
+        console.log('Database file:', dbPath);
         createTable();
     }
 });
