@@ -1,3 +1,273 @@
+# Complete MongoDB Setup Guide - Step by Step
+
+## 📌 Important: MongoDB vs SQLite Difference
+
+**SQLite (Old)**: Required creating tables with SQL commands
+**MongoDB (New)**: Collections are created automatically when you insert data!
+
+You just need:
+1. ✅ Define schemas (structure) using Mongoose
+2. ✅ Connect to MongoDB
+3. ✅ Start inserting data - collections will be created automatically!
+
+---
+
+## 🔧 Step-by-Step Setup Instructions
+
+### STEP 1: Update MongoDB Password
+
+Open `server/.env` file and replace `<db_password>` with your actual MongoDB password:
+
+```env
+MONGODB_URI=mongodb+srv://yugkunjadiya007_db_user:YOUR_ACTUAL_PASSWORD@cluster0.j4vnybn.mongodb.net/labor-management?retryWrites=true&w=majority
+PORT=5000
+NODE_ENV=development
+```
+
+**Example**: If your password is `MyPass123`, it should look like:
+```env
+MONGODB_URI=mongodb+srv://yugkunjadiya007_db_user:MyPass123@cluster0.j4vnybn.mongodb.net/labor-management?retryWrites=true&w=majority
+```
+
+---
+
+### STEP 2: Install Dependencies
+
+Open terminal in the `server` folder and run:
+
+```bash
+cd server
+npm install
+```
+
+This will install:
+- `mongoose` - MongoDB driver
+- `dotenv` - Environment variables
+- `express`, `cors`, `body-parser`, `multer` - Server dependencies
+
+---
+
+### STEP 3: Verify File Structure
+
+Make sure you have these files:
+
+```
+server/
+├── .env                      ← MongoDB connection (password updated!)
+├── package.json              ← Dependencies
+├── server.js                 ← Main server file
+├── models/
+│   ├── Worker.js            ← Worker schema (NO table creation needed!)
+│   └── Attendance.js        ← Attendance schema (NO table creation needed!)
+└── uploads/                  ← Photo uploads folder
+```
+
+---
+
+### STEP 4: Start the Server
+
+```bash
+npm start
+```
+
+**You should see:**
+```
+✅ Connected to MongoDB
+✅ Database ready
+========================================
+🚀 Factory Labor Management Server
+========================================
+✅ Server running on: http://localhost:5000
+```
+
+---
+
+### STEP 5: Test the Connection
+
+Open browser and visit:
+```
+http://localhost:5000/api/health
+```
+
+You should see:
+```json
+{
+  "status": "ok",
+  "message": "Server is running",
+  "timestamp": "2026-01-21T..."
+}
+```
+
+---
+
+### STEP 6: Start Using Your App
+
+1. Open your frontend application
+2. Add a worker - MongoDB will automatically create the `workers` collection
+3. Mark attendance - MongoDB will automatically create the `attendances` collection
+
+**That's it!** No manual collection creation needed! 🎉
+
+---
+
+## 🗂️ Complete Code Reference
+
+### File 1: `server/.env`
+```env
+# MongoDB Configuration
+MONGODB_URI=mongodb+srv://yugkunjadiya007_db_user:<db_password>@cluster0.j4vnybn.mongodb.net/labor-management?retryWrites=true&w=majority
+
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+```
+
+---
+
+### File 2: `server/models/Worker.js`
+```javascript
+const mongoose = require('mongoose');
+
+const workerSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    phone: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    gender: {
+        type: String,
+        required: true,
+        enum: ['Male', 'Female', 'Other']
+    },
+    joinDate: {
+        type: String,
+        required: true
+    },
+    work: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    address: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    salary: {
+        type: String,
+        default: 'Not specified'
+    },
+    shift: {
+        type: String,
+        default: 'Not specified'
+    },
+    reference: {
+        type: String,
+        default: 'Not provided'
+    },
+    emergencyContact: {
+        type: String,
+        default: 'Not provided'
+    },
+    idProof: {
+        type: String,
+        default: 'Not provided'
+    },
+    idNumber: {
+        type: String,
+        default: 'Not provided'
+    },
+    notes: {
+        type: String,
+        default: 'None'
+    },
+    photo: {
+        type: String,
+        default: null
+    }
+}, {
+    timestamps: true  // Automatically adds createdAt and updatedAt
+});
+
+// Export the model - MongoDB will create 'workers' collection automatically
+module.exports = mongoose.model('Worker', workerSchema);
+```
+
+---
+
+### File 3: `server/models/Attendance.js`
+```javascript
+const mongoose = require('mongoose');
+
+const attendanceSchema = new mongoose.Schema({
+    workerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Worker',
+        required: true
+    },
+    date: {
+        type: String,
+        required: true
+    },
+    status: {
+        type: String,
+        required: true,
+        enum: ['Present', 'Absent', 'Half Day', 'Leave']
+    },
+    shiftType: {
+        type: String,
+        default: ''
+    },
+    notes: {
+        type: String,
+        default: ''
+    }
+}, {
+    timestamps: true
+});
+
+// Create compound index for unique worker+date combination
+attendanceSchema.index({ workerId: 1, date: 1 }, { unique: true });
+
+// Export the model - MongoDB will create 'attendances' collection automatically
+module.exports = mongoose.model('Attendance', attendanceSchema);
+```
+
+---
+
+### File 4: `server/package.json`
+```json
+{
+  "name": "heli-fabrics-backend",
+  "version": "1.0.0",
+  "description": "HELI Fabrics Labor Management Backend API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2",
+    "mongoose": "^8.0.3",
+    "dotenv": "^16.3.1",
+    "multer": "^1.4.5-lts.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
+```
+
+---
+
+### File 5: `server/server.js` (Complete Code)
+```javascript
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -16,10 +286,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
-    // Allow all origins for now (you can restrict this later)
     return callback(null, true);
   },
   credentials: true
@@ -30,7 +297,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = process.env.NODE_ENV === 'production' 
-    ? path.join('/tmp', 'uploads')  // Use /tmp on Render
+    ? path.join('/tmp', 'uploads')
     : path.join(__dirname, 'uploads');
     
 if (!fs.existsSync(uploadsDir)) {
@@ -49,13 +316,23 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+// ==========================================
 // MongoDB Connection
+// ==========================================
+// NO NEED TO CREATE TABLES/COLLECTIONS!
+// They will be created automatically when you insert data
+// ==========================================
+
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/labor-management';
 
-mongoose.connect(MONGODB_URI)
+mongoose.connect(MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
 .then(() => {
     console.log('✅ Connected to MongoDB');
     console.log('✅ Database ready');
+    console.log('📝 Collections will be created automatically when you add data!');
 })
 .catch((err) => {
     console.error('❌ MongoDB connection error:', err);
@@ -72,23 +349,9 @@ mongoose.connection.on('reconnected', () => {
     console.log('✅ MongoDB reconnected');
 });
 
+// ==========================================
 // API Routes
-
-// Root endpoint - Welcome page
-app.get('/', (req, res) => {
-    res.json({
-        message: '🚀 Factory Labor Management API',
-        version: '1.0.0',
-        status: 'running',
-        database: 'MongoDB',
-        endpoints: {
-            health: '/api/health',
-            workers: '/api/workers',
-            attendance: '/api/attendance'
-        },
-        documentation: 'All endpoints are prefixed with /api'
-    });
-});
+// ==========================================
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -169,7 +432,6 @@ app.put('/api/workers/:id', async (req, res) => {
             idProof, idNumber, notes
         };
 
-        // Only update photo if provided
         if (photo !== undefined) {
             updateData.photo = photo;
         }
@@ -192,7 +454,6 @@ app.put('/api/workers/:id', async (req, res) => {
 // Delete worker
 app.delete('/api/workers/:id', async (req, res) => {
     try {
-        // Also delete all attendance records for this worker
         await Attendance.deleteMany({ workerId: req.params.id });
         await Worker.findByIdAndDelete(req.params.id);
         
@@ -204,52 +465,26 @@ app.delete('/api/workers/:id', async (req, res) => {
     }
 });
 
+// ==========================================
 // Attendance Routes
+// ==========================================
 
 // Mark attendance
 app.post('/api/attendance', async (req, res) => {
     try {
         const { workerId, date, status, shiftType, notes } = req.body;
 
-        console.log('📝 Marking attendance:', { workerId, date, status, shiftType });
-
-        // Validate required fields
-        if (!workerId || !date || !status) {
-            return res.status(400).json({ 
-                error: 'Missing required fields: workerId, date, and status are required' 
-            });
-        }
-
-        // Verify worker exists
-        const workerExists = await Worker.findById(workerId);
-        if (!workerExists) {
-            return res.status(404).json({ 
-                error: `Worker with ID ${workerId} not found` 
-            });
-        }
-
-        // Use findOneAndUpdate with upsert to replace if exists
         const attendance = await Attendance.findOneAndUpdate(
             { workerId, date },
-            { 
-                workerId,
-                date,
-                status, 
-                shiftType: shiftType || '', 
-                notes: notes || '' 
-            },
-            { upsert: true, new: true, runValidators: true }
+            { status, shiftType: shiftType || '', notes: notes || '' },
+            { upsert: true, new: true }
         );
-
-        console.log('✅ Attendance saved:', attendance);
 
         res.json({
             message: 'Attendance marked successfully',
-            id: attendance._id,
-            attendance
+            id: attendance._id
         });
     } catch (err) {
-        console.error('❌ Error marking attendance:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -261,7 +496,6 @@ app.get('/api/attendance/worker/:workerId', async (req, res) => {
         let query = { workerId: req.params.workerId };
 
         if (month && year) {
-            // Filter by month and year using regex on date string
             const monthStr = month.toString().padStart(2, '0');
             query.date = new RegExp(`^${year}-${monthStr}`);
         }
@@ -280,7 +514,6 @@ app.get('/api/attendance/date/:date', async (req, res) => {
             .populate('workerId', 'name work shift')
             .sort({ 'workerId.name': 1 });
 
-        // Transform to match expected format
         const transformed = attendance.map(a => ({
             _id: a._id,
             workerId: a.workerId._id,
@@ -308,17 +541,13 @@ app.get('/api/attendance/report', async (req, res) => {
             return res.status(400).json({ error: 'Month and year are required' });
         }
 
-        // Get all workers
         const workers = await Worker.find().sort({ name: 1 });
 
-        // Build date filter for attendance
         const monthStr = month.toString().padStart(2, '0');
         const dateRegex = new RegExp(`^${year}-${monthStr}`);
 
-        // Get attendance for the month
         const attendanceRecords = await Attendance.find({ date: dateRegex });
 
-        // Build report for each worker
         const report = workers.map(worker => {
             const workerAttendance = attendanceRecords.filter(
                 a => a.workerId.toString() === worker._id.toString()
@@ -358,14 +587,12 @@ app.get('/api/attendance/worker/:workerId', async (req, res) => {
             return res.status(400).json({ error: 'Worker ID is required' });
         }
 
-        // Get worker details
         const worker = await Worker.findById(workerId);
         
         if (!worker) {
             return res.status(404).json({ error: 'Worker not found' });
         }
 
-        // Build attendance query based on filters
         let query = { workerId };
 
         if (month && year) {
@@ -379,7 +606,6 @@ app.get('/api/attendance/worker/:workerId', async (req, res) => {
             .select('date status shiftType notes createdAt')
             .sort({ date: -1 });
 
-        // Calculate statistics
         const stats = {
             total: attendance.length,
             present: attendance.filter(a => a.status === 'Present').length,
@@ -432,3 +658,76 @@ process.on('SIGINT', async () => {
         process.exit(1);
     }
 });
+```
+
+---
+
+## ❓ Frequently Asked Questions
+
+### Q1: Do I need to create collections manually in MongoDB?
+**A:** NO! MongoDB automatically creates collections when you insert the first document. Just define the schema with Mongoose and start using it.
+
+### Q2: Where can I see my collections?
+**A:** Login to MongoDB Atlas (https://cloud.mongodb.com/) → Browse Collections → You'll see `workers` and `attendances` collections after you add data.
+
+### Q3: What if collections don't appear?
+**A:** They will appear only AFTER you add the first worker or attendance record from your frontend.
+
+### Q4: Do I need to run any database scripts?
+**A:** NO! Unlike SQLite, MongoDB doesn't need CREATE TABLE commands. Just connect and start using it.
+
+### Q5: How do I know collections are created?
+**A:** 
+1. Add a worker from your frontend
+2. Go to MongoDB Atlas dashboard
+3. Navigate to your cluster → Collections
+4. You'll see the `workers` collection
+
+---
+
+## 🎯 Quick Checklist
+
+- [ ] Updated password in `server/.env`
+- [ ] Ran `npm install` in server folder
+- [ ] Started server with `npm start`
+- [ ] Saw "✅ Connected to MongoDB" message
+- [ ] Tested health endpoint: http://localhost:5000/api/health
+- [ ] Added first worker from frontend
+- [ ] Verified collection in MongoDB Atlas dashboard
+
+---
+
+## 🚨 Troubleshooting
+
+### Server won't start?
+```bash
+# Make sure you're in the server folder
+cd server
+
+# Reinstall dependencies
+rm -rf node_modules
+npm install
+```
+
+### Can't connect to MongoDB?
+1. Check internet connection
+2. Verify password in `.env` (no spaces, no `<>`)
+3. Check MongoDB Atlas - ensure cluster is running
+4. Whitelist your IP in MongoDB Atlas Network Access
+
+### Collections not appearing?
+- They appear only after first data insert
+- Try adding a worker from frontend
+- Refresh MongoDB Atlas dashboard
+
+---
+
+## ✅ You're Done!
+
+No manual collection creation needed. Just:
+1. Update password
+2. Install dependencies
+3. Run server
+4. Use your app
+
+MongoDB handles everything else automatically! 🎉
