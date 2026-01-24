@@ -50,11 +50,11 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/labor-management';
+const MONGODB_URI = 'mongodb+srv://yugkunjadiya007_db_user:Yug271205@cluster0.j4vnybn.mongodb.net/labor-management?retryWrites=true&w=majority';
 
 mongoose.connect(MONGODB_URI)
 .then(() => {
-    console.log('✅ Connected to MongoDB');
+    console.log('✅ Connected to MongoDB Atlas');
     console.log('✅ Database ready');
 })
 .catch((err) => {
